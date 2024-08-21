@@ -250,11 +250,12 @@ namespace BE_07_24.DataAccess.DALImpl
             var returnData = new ReturnData();
             // Khởi tạo giá cho từng công đoạn
             Dictionary<string, double> pricePerProcess = new Dictionary<string, double>
-        {
-            { "may", 10000 },
-            { "cat", 20000 },
-            { "va", 15000 }
-        };
+    {
+        { "may", 10000 },
+        { "cat", 20000 },
+        { "va", 15000 }
+    };
+
             try
             {
                 // Đường dẫn lưu file
@@ -271,13 +272,16 @@ namespace BE_07_24.DataAccess.DALImpl
                     workSheet.Cell(1, 5).Value = "Price";
                     workSheet.Cell(1, 6).Value = "Total";
 
-                    int row = 2; // Bắt đầu từ hàng thứ hai để ghi dữ liệu
+                    int row = 3; // Bắt đầu từ hàng thứ hai để ghi dữ liệu
                     double grandTotalQty = 0;
                     double grandTotalSum = 0;
 
                     // Lặp qua tất cả nhân viên
                     foreach (var nhanVien in danhsachNhanVien)
                     {
+                        double employeeTotalQty = 0;
+                        double employeeTotalSum = 0;
+
                         foreach (var cd in nhanVien.congDoanSanXuats)
                         {
                             double price = pricePerProcess.ContainsKey(cd.Ten_Cong_Doan) ? pricePerProcess[cd.Ten_Cong_Doan] : 0;
@@ -292,14 +296,34 @@ namespace BE_07_24.DataAccess.DALImpl
 
                             grandTotalQty += cd.So_Luong_San_Pham;
                             grandTotalSum += total;
+
+                            employeeTotalQty += cd.So_Luong_San_Pham;
+                            employeeTotalSum += total;
+
                             row++;
                         }
+
+                        var employeeTotalRow = workSheet.Row(row);
+                        workSheet.Cell(row, 3).Value = "";
+                        workSheet.Cell(row, 4).Value = employeeTotalQty;
+                        workSheet.Cell(row, 6).Value = employeeTotalSum;
+
+                        employeeTotalRow.Style.Fill.BackgroundColor = XLColor.LightYellow; // Màu nền cho tổng cộng của từng nhân viên
+                        employeeTotalRow.Style.Font.Bold = true; // Chữ đậm cho tổng cộng của từng nhân viên
+                        row++;
                     }
 
-                    // Thêm dòng tổng cộng vào
-                    workSheet.Cell(row, 3).Value = "Tổng cộng";
-                    workSheet.Cell(row, 4).Value = grandTotalQty;
-                    workSheet.Cell(row, 6).Value = grandTotalSum;
+                    // Thêm dòng tổng cộng toàn bộ ngay dưới tiêu đề và tô màu nền
+                    var grandTotalRow = workSheet.Row(2);
+                    workSheet.Cell(2, 3).Value = "TỔNG ";
+                    workSheet.Cell(2, 4).Value = grandTotalQty;
+                    workSheet.Cell(2, 6).Value = grandTotalSum;
+
+                    grandTotalRow.Style.Fill.BackgroundColor = XLColor.LightGreen; // Màu nền cho tổng cộng toàn bộ
+                    grandTotalRow.Style.Font.Bold = true; // Chữ đậm cho tổng cộng toàn bộ
+
+                    // Cập nhật hàng tiếp theo sau tổng cộng toàn bộ
+                    row = 3 + danhsachNhanVien.Sum(nv => nv.congDoanSanXuats.Count()) + danhsachNhanVien.Count();
 
                     try
                     {
@@ -321,9 +345,5 @@ namespace BE_07_24.DataAccess.DALImpl
             }
             return returnData;
         }
-
-
-
-
     }
 }
